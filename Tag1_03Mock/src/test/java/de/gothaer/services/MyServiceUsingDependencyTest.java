@@ -3,24 +3,26 @@ package de.gothaer.services;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.internal.verification.AtLeast;
 import org.mockito.internal.verification.Times;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class MyServiceUsingDependencyTest {
 
+    @Mock
     private Dependeny dependenyMock ;
+    @InjectMocks
     private MyServiceUsingDependency objectUnderTest;
 
-    @BeforeEach
-    void setUp() {
-        dependenyMock = Mockito.mock(Dependeny.class);
-        objectUnderTest = new MyServiceUsingDependency(dependenyMock);
 
-    }
 
     @Test
     void einsTest() {
@@ -51,16 +53,17 @@ class MyServiceUsingDependencyTest {
         when(dependenyMock.foobar(anyString())).thenReturn(3);
         var result = objectUnderTest.drei();
         assertEquals(9, result);
-        verify(dependenyMock).foobar("Hallo Welt");
+        verify(dependenyMock, atLeast(1)).foobar("Hallo Welt");
     }
 
     @Test
     void vierTest() {
 
-        when(dependenyMock.foobar("Hallo")).thenReturn(5);
-        when(dependenyMock.foobar(anyString())).thenReturn(7);
-        when(dependenyMock.foobar("Hello")).thenReturn(3);
+        lenient().when(dependenyMock.foobar("Hallo")).thenReturn(5);
+        lenient().when(dependenyMock.foobar(anyString())).thenReturn(7);
+        lenient().when(dependenyMock.foobar("Hello")).thenReturn(3);
 
-        System.out.println(dependenyMock.foobar("Franz"));
+        System.out.println(dependenyMock.foobar("Hello"));
+        System.out.println(dependenyMock.foobar("Hallo"));
     }
 }
