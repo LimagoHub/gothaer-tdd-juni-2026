@@ -11,7 +11,7 @@ public class Schwein {
     private int gewicht;
 
     public Schwein() {
-        this("nobody");
+        this("Nobody");
     }
 
     public Schwein(final String name) {
@@ -24,7 +24,7 @@ public class Schwein {
     }
 
     public final void setName(final String name) {
-        if("elsa".equalsIgnoreCase(name)) throw new IllegalArgumentException("Ungültiger Name");
+        if(name == null || "elsa".equalsIgnoreCase(name)) throw new IllegalArgumentException("Unerlaubter Name");
         this.name = name;
     }
 
