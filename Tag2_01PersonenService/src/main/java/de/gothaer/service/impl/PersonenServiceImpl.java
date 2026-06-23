@@ -7,6 +7,8 @@ import de.gothaer.service.PersonenService;
 import de.gothaer.service.PersonenServiceException;
 import lombok.RequiredArgsConstructor;
 
+import java.util.UUID;
+
 @RequiredArgsConstructor
 public class PersonenServiceImpl implements PersonenService {
 
@@ -34,8 +36,15 @@ public class PersonenServiceImpl implements PersonenService {
         }
     }
 
+    @Override
+    public void speichern(final String vorname, final String nachname) throws PersonenServiceException {
+        Person person = Person.builder().vorname(vorname).nachname(nachname).build();
+        speichern(person);
+    }
+
     private void speichernImpl(final Person person) throws PersonenServiceException {
         checkPerson(person);
+        person.setId(UUID.randomUUID());
         repository.save(person);
     }
 

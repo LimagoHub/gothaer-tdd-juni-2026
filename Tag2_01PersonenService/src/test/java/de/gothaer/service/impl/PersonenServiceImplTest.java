@@ -6,6 +6,8 @@ import de.gothaer.service.BlacklistService;
 import de.gothaer.service.PersonenServiceException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -22,7 +24,7 @@ class PersonenServiceImplTest {
     @Mock
     private PersonenRepository repositoryMock;
 
-    @Mock
+    @Mock(strictness = Mock.Strictness.LENIENT)
     private BlacklistService blacklistServiceMock;
 
     @InjectMocks
@@ -30,7 +32,7 @@ class PersonenServiceImplTest {
 
     @Test
     void speichern_ParameterNull_throwsPersonenServiceException() throws PersonenServiceException {
-        //when(blacklistServiceMock.isBlacklisted(any(Person.class))).thenReturn(false);
+
         PersonenServiceException ex = assertThrows(PersonenServiceException.class, () -> objectUnderTest.speichern(null));
         assertEquals("Person darf nicht null sein", ex.getMessage());
     }
@@ -41,6 +43,7 @@ class PersonenServiceImplTest {
 
         PersonenServiceException ex = assertThrows(PersonenServiceException.class, () -> objectUnderTest.speichern(invalidPerson));
         assertEquals("Vorname zu kurz", ex.getMessage());
+        verify(repositoryMock, never()).save(any(Person.class));
     }
     @Test
     void speichern_VornameZuKurz_throwsPersonenServiceException() throws PersonenServiceException {
@@ -49,6 +52,7 @@ class PersonenServiceImplTest {
 
         PersonenServiceException ex = assertThrows(PersonenServiceException.class, () -> objectUnderTest.speichern(invalidPerson));
         assertEquals("Vorname zu kurz", ex.getMessage());
+        verify(repositoryMock, never()).save(any(Person.class));
     }
     @Test
     void speichern_NachnameNull_throwsPersonenServiceException() throws PersonenServiceException {
@@ -57,6 +61,7 @@ class PersonenServiceImplTest {
 
         PersonenServiceException ex = assertThrows(PersonenServiceException.class, () -> objectUnderTest.speichern(invalidPerson));
         assertEquals("Nachname zu kurz", ex.getMessage());
+        verify(repositoryMock, never()).save(any(Person.class));
     }
     @Test
     void speichern_NachnameZuKurz_throwsPersonenServiceException() throws PersonenServiceException {
@@ -65,6 +70,7 @@ class PersonenServiceImplTest {
 
         PersonenServiceException ex = assertThrows(PersonenServiceException.class, () -> objectUnderTest.speichern(invalidPerson));
         assertEquals("Nachname zu kurz", ex.getMessage());
+        verify(repositoryMock, never()).save(any(Person.class));
     }
 
     @Test
@@ -76,6 +82,7 @@ class PersonenServiceImplTest {
         PersonenServiceException ex = assertThrows(PersonenServiceException.class, () -> objectUnderTest.speichern(unerwuenschtePerson));
         assertEquals("Antipath", ex.getMessage());
         verify(blacklistServiceMock).isBlacklisted(unerwuenschtePerson);
+        verify(repositoryMock, never()).save(any(Person.class));
     }
 
     @Test
@@ -93,8 +100,15 @@ class PersonenServiceImplTest {
     @Test
     void speichern_happyDay_personPassedToRepoAndNoExceptionIsThrown() throws PersonenServiceException {
         Person validPerson = Person.builder().id(UUID.randomUUID()).vorname("John").nachname("Doe").build();
+
+        doNothing().when(repositoryMock).save(any(Person.class));
+        when(blacklistServiceMock.isBlacklisted(validPerson)).thenReturn(false);
+
+
         objectUnderTest.speichern(validPerson);
-        verify(repositoryMock, times(1)).save(validPerson);
+        InOrder inOrder = inOrder(blacklistServiceMock, repositoryMock);
+        inOrder.verify(blacklistServiceMock).isBlacklisted(validPerson);
+        inOrder.verify(repositoryMock, times(1)).save(validPerson);
     }
 
     @Test
@@ -104,5 +118,19 @@ class PersonenServiceImplTest {
         PersonenServiceException ex = assertThrows(PersonenServiceException.class, () -> objectUnderTest.speichern(validPerson));
         assertEquals("Fehler beim Speichern", ex.getMessage());
         assertEquals(ArithmeticException.class, ex.getCause().getClass());
+    }
+
+    @Test
+    void speichern_overloaded() throws PersonenServiceException {
+
+        ArgumentCaptor<Person> personCaptor = ArgumentCaptor.forClass(Person.class);
+        Person validPerson = Person.builder().id(UUID.randomUUID()).vorname("John").nachname("Doe").build();
+
+        objectUnderTest.speichern("John","Doe");
+        verify(repositoryMock).save(personCaptor.capture());
+
+        Person person = personCaptor.getValue();
+        assertNotNull(person.getId());
+        assertEquals("John", person.getVorname());
     }
 }
