@@ -1,15 +1,13 @@
 package de.gothaer.persistence;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface PersonenRepository {
-    void save(Person person);
-    void update(Person person);
 
-    void delete(Person person);
-
-    Optional<Person> findById(String id);
-
-    List<Person> findAlL();
+    void save(final Person person);
+    void update(final Person person);
+    Optional<Person> findById(final UUID id);
+    Iterable<Person> findAll();
+    boolean delete(final UUID id);
 }

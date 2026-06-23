@@ -1,6 +1,7 @@
 package de.gothaer.service;
 
 public class PersonenServiceException extends Exception {
+
     public PersonenServiceException() {
     }
 
