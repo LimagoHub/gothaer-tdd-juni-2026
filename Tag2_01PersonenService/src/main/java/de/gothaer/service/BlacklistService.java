@@ -4,5 +4,5 @@ import de.gothaer.persistence.Person;
 
 public interface BlacklistService {
 
-    boolean isBlacklistes(final Person possibleBlacklistedPerson);
+    boolean isBlacklisted(final Person possibleBlacklistedPerson);
 }

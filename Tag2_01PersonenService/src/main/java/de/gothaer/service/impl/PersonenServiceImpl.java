@@ -44,8 +44,8 @@ public class PersonenServiceImpl implements PersonenService {
         businesscheck(person);
     }
 
-    private static void businesscheck(final Person person) throws PersonenServiceException {
-        if("Attila".equalsIgnoreCase(person.getVorname()))
+    private void businesscheck(final Person person) throws PersonenServiceException {
+        if(blacklistService.isBlacklisted(person))
             throw new PersonenServiceException("Antipath");
     }
 

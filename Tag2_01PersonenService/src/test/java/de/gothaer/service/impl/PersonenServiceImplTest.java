@@ -2,29 +2,35 @@ package de.gothaer.service.impl;
 
 import de.gothaer.persistence.Person;
 import de.gothaer.persistence.PersonenRepository;
-import de.gothaer.service.PersonenService;
+import de.gothaer.service.BlacklistService;
 import de.gothaer.service.PersonenServiceException;
-import org.assertj.core.condition.AnyOf;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
+//@MockitoSettings(strictness = Strictness.STRICT_STUBS)
 class PersonenServiceImplTest {
     @Mock
     private PersonenRepository repositoryMock;
+
+    @Mock
+    private BlacklistService blacklistServiceMock;
 
     @InjectMocks
     private PersonenServiceImpl objectUnderTest;
 
     @Test
     void speichern_ParameterNull_throwsPersonenServiceException() throws PersonenServiceException {
+        //when(blacklistServiceMock.isBlacklisted(any(Person.class))).thenReturn(false);
         PersonenServiceException ex = assertThrows(PersonenServiceException.class, () -> objectUnderTest.speichern(null));
         assertEquals("Person darf nicht null sein", ex.getMessage());
     }
@@ -64,10 +70,12 @@ class PersonenServiceImplTest {
     @Test
     void speichern_Antipath_throwsPersonenServiceException() throws PersonenServiceException {
 
-        Person unerwuenschtePerson = Person.builder().id(UUID.randomUUID()).vorname("Attila").nachname("Der Hunne").build();
+        Person unerwuenschtePerson = Person.builder().id(UUID.randomUUID()).vorname("John").nachname("Doe").build();
 
+        when(blacklistServiceMock.isBlacklisted(unerwuenschtePerson)).thenReturn(true);
         PersonenServiceException ex = assertThrows(PersonenServiceException.class, () -> objectUnderTest.speichern(unerwuenschtePerson));
         assertEquals("Antipath", ex.getMessage());
+        verify(blacklistServiceMock).isBlacklisted(unerwuenschtePerson);
     }
 
     @Test
@@ -89,5 +97,12 @@ class PersonenServiceImplTest {
         verify(repositoryMock, times(1)).save(validPerson);
     }
 
-
+    @Test
+    void speichern_ExceptionInBlacklistServce_throwsPersonenServiceException() throws PersonenServiceException {
+        Person validPerson = Person.builder().id(UUID.randomUUID()).vorname("John").nachname("Doe").build();
+        when(blacklistServiceMock.isBlacklisted(any(Person.class))).thenThrow(ArithmeticException.class);
+        PersonenServiceException ex = assertThrows(PersonenServiceException.class, () -> objectUnderTest.speichern(validPerson));
+        assertEquals("Fehler beim Speichern", ex.getMessage());
+        assertEquals(ArithmeticException.class, ex.getCause().getClass());
+    }
 }
