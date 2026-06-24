@@ -6,6 +6,9 @@ import de.gothaer.service.BlacklistService;
 import de.gothaer.service.PersonenServiceException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
@@ -15,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -132,5 +136,24 @@ class PersonenServiceImplTest {
         Person person = personCaptor.getValue();
         assertNotNull(person.getId());
         assertEquals("John", person.getVorname());
+    }
+    @ParameterizedTest(name = "Durchlauf Nr. {index} mit Invalid Person: {0} und Meldung {1}")
+    @MethodSource("providePersonsForSpeichern")
+    void speichern_simplevalidation(Person invalidPerson, String expectedErrorMessage) {
+        PersonenServiceException ex = assertThrows(PersonenServiceException.class, () -> objectUnderTest.speichern(invalidPerson));
+        assertEquals(expectedErrorMessage, ex.getMessage());
+        verify(repositoryMock, never()).save(any(Person.class));
+    }
+    private static Stream<Arguments> providePersonsForSpeichern() {
+        return Stream.of(
+                Arguments.of((Person)null, "Person darf nicht null sein"),
+                Arguments.of(Person.builder().id(UUID.randomUUID()).vorname("John").nachname(null).build(), "Nachname zu kurz"),
+                Arguments.of(Person.builder().id(UUID.randomUUID()).vorname("John").nachname("").build(), "Nachname zu kurz"),
+                Arguments.of(Person.builder().id(UUID.randomUUID()).vorname("John").nachname("D").build(), "Nachname zu kurz"),
+                Arguments.of(Person.builder().id(UUID.randomUUID()).vorname(null).nachname("Doe").build(), "Vorname zu kurz"),
+                Arguments.of(Person.builder().id(UUID.randomUUID()).vorname("").nachname("Doe").build(), "Vorname zu kurz"),
+                Arguments.of(Person.builder().id(UUID.randomUUID()).vorname("J").nachname("Doe").build(), "Vorname zu kurz")
+
+        );
     }
 }

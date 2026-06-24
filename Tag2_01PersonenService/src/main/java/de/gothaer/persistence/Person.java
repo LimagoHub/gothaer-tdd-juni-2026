@@ -1,9 +1,7 @@
 package de.gothaer.persistence;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.Tolerate;
 
 import java.util.UUID;
 
@@ -13,6 +11,7 @@ import java.util.UUID;
 @Builder
 public class Person {
 
+    @ToString.Exclude
     private UUID id;
     private String vorname;
     private String nachname ;
